@@ -1,0 +1,25 @@
+name: contacts
+description: Contacts App
+publish_to: 'none'
+version: 2.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  intl_phone_number_input: ^0.7.4
+  sqflite: ^2.3.3
+  url_launcher: ^6.3.0
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
