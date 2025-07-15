@@ -1,197 +1,175 @@
 import 'dart:async';
 
-import 'package:contacts/ui/home_page.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:contacts/ui/home_page.dart';  // para OrderOptions
 
-const String contactTable = 'contactTable';
-const String idColumn = 'idColumn';
-const String nameColumn = 'nameColumn';
-const String emailColumn = 'emailColumn';
-const String phoneColumn = 'phoneColumn';
-const String imgColumn = 'imgColumn';
+const String contactTable   = 'contactTable';
+const String idColumn       = 'idColumn';
+const String nameColumn     = 'nameColumn';
+const String emailColumn    = 'emailColumn';
+const String phoneColumn    = 'phoneColumn';
+const String imgColumn      = 'imgColumn';
+const String favoriteColumn = 'favoriteColumn';
 
 class ContactHelper {
   static final _instance = ContactHelper._internal();
   factory ContactHelper() => _instance;
-
   ContactHelper._internal();
+
   Database? _db;
 
   Future<Database> get db async {
-    if (_db != null) {
-      return _db!;
-    } else {
-      _db = await initDb();
-      return _db!;
-    }
+    if (_db != null) return _db!;
+    _db = await initDb();
+    return _db!;
   }
 
   Future<Database> initDb() async {
     final databasesPath = await getDatabasesPath();
     final path = '$databasesPath/contactsnew.db';
 
-    return await openDatabase(path, version: 1,
-        onCreate: (db, newerVersion) async {
-      await db.execute('CREATE TABLE $contactTable('
-          '$idColumn INTEGER PRIMARY KEY AUTOINCREMENT,'
-          '$nameColumn TEXT,'
-          '$emailColumn TEXT,'
-          '$phoneColumn TEXT,'
-          '$imgColumn TEXT)');
-    });
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE $contactTable(
+            $idColumn       INTEGER PRIMARY KEY AUTOINCREMENT,
+            $nameColumn     TEXT,
+            $emailColumn    TEXT,
+            $phoneColumn    TEXT,
+            $imgColumn      TEXT,
+            $favoriteColumn INTEGER DEFAULT 0
+          )
+        ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // adiciona coluna favoriteColumn mantendo dados antigos
+          await db.execute('''
+            ALTER TABLE $contactTable
+            ADD COLUMN $favoriteColumn INTEGER DEFAULT 0
+          ''');
+        }
+      },
+    );
   }
 
   Future<int> deleteContact(int id) async {
-    var dbContact = await db;
-    final result = await dbContact
-        .delete(contactTable, where: '$idColumn = ?', whereArgs: [id]);
-
-    return result;
+    final dbClient = await db;
+    return await dbClient.delete(
+      contactTable,
+      where: '$idColumn = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<int> updateOrCreateContact(Contact contact) async {
-    var dbContact = await db;
-
-    int result = 0;
-
-    if (contact.id == 0) {
-      result = await dbContact.insert(
+    final dbClient = await db;
+    final map = contact.toMap(includeId: false);
+    if (contact.id == null || contact.id == 0) {
+      return await dbClient.insert(
         contactTable,
-        contact.toMap(includeId: false),
+        map,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } else {
-      result = await dbContact.update(
+      return await dbClient.update(
         contactTable,
-        contact.toMap(includeId: false),
+        map,
         where: '$idColumn = ?',
         whereArgs: [contact.id],
       );
     }
-
-    return result;
   }
 
-  Future<List> getAllContacts(
-    OrderOptions order,
-  ) async {
-    var dbContact = await db;
+  Future<List<Contact>> getAllContacts(OrderOptions order) async {
+    final dbClient = await db;
     final orderBy = order == OrderOptions.aToZ ? 'ASC' : 'DESC';
-
-    List listMap = await dbContact.rawQuery(
-      'SELECT * FROM $contactTable ORDER BY $nameColumn COLLATE NOCASE $orderBy',
+    final listMap = await dbClient.rawQuery(
+      'SELECT * FROM $contactTable '
+      'ORDER BY $nameColumn COLLATE NOCASE $orderBy',
     );
-
-    var listContact = <Contact>[];
-
-    for (Map m in listMap) {
-      listContact.add(Contact.fromMap(m));
-    }
-
-    return listContact;
+    return listMap.map((m) => Contact.fromMap(m)).toList();
   }
 
   Future<int?> getNumber() async {
-    var dbContact = await db;
+    final dbClient = await db;
     return Sqflite.firstIntValue(
-        await dbContact.rawQuery('SELECT COUNT(*) FROM $contactTable'));
+      await dbClient.rawQuery('SELECT COUNT(*) FROM $contactTable'),
+    );
   }
 
   Future close() async {
-    var dbContact = await db;
-    dbContact.close();
+    final dbClient = await db;
+    await dbClient.close();
   }
 }
 
 class Contact {
+  int? id;
+  String name;
+  String email;
+  String phone;
+  String img;          // caminho para a foto
+  bool isFavorite;     // novo campo
+
   Contact({
-    required this.id,
+    this.id,
     required this.name,
     required this.email,
     required this.phone,
     required this.img,
+    this.isFavorite = false,
   });
 
-  final int id;
-  final String name;
-  final String email;
-  final String phone;
-  final String img;
-
-  factory Contact.empty() {
+  factory Contact.fromMap(Map<String, dynamic> map) {
     return Contact(
-      id: 0,
-      name: '',
-      email: '',
-      phone: '',
-      img: '',
-    );
-  }
-
-  factory Contact.fromMap(Map map) {
-    return Contact(
-      id: map[idColumn],
-      name: map[nameColumn],
-      email: map[emailColumn],
-      phone: map[phoneColumn],
-      img: map[imgColumn],
+      id: map[idColumn] as int?,
+      name: map[nameColumn] as String?    ?? '',
+      email: map[emailColumn] as String?  ?? '',
+      phone: map[phoneColumn] as String?  ?? '',
+      img: map[imgColumn] as String?      ?? '',
+      isFavorite: (map[favoriteColumn] as int? ?? 0) == 1,
     );
   }
 
   Map<String, dynamic> toMap({bool includeId = true}) {
-    final map = <String, dynamic>{
+    final m = <String, dynamic>{
       nameColumn: name,
       emailColumn: email,
       phoneColumn: phone,
       imgColumn: img,
+      favoriteColumn: isFavorite ? 1 : 0,
     };
-
-    if (includeId) {
-      map[idColumn] = id;
+    if (includeId && id != null && id! > 0) {
+      m[idColumn] = id;
     }
-
-    return map;
+    return m;
   }
 
   @override
   String toString() {
-    return 'Contact(id: $id,name: $name, email: $email, phone: $phone, img: $img)';
+    return 'Contact{id: $id, name: $name, email: $email, '
+           'phone: $phone, img: $img, isFavorite: $isFavorite}';
   }
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is Contact &&
-        other.id == id &&
-        other.name == name &&
-        other.email == email &&
-        other.phone == phone &&
-        other.img == img;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        name.hashCode ^
-        email.hashCode ^
-        phone.hashCode ^
-        img.hashCode;
-  }
-
+  /// Para atualizar apenas alguns campos
   Contact copyWith({
-    int? id,
+    int?    id,
     String? name,
     String? email,
     String? phone,
     String? img,
+    bool?   isFavorite,
   }) {
     return Contact(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
-      img: img ?? this.img,
+      id:         id ?? this.id,
+      name:       name ?? this.name,
+      email:      email ?? this.email,
+      phone:      phone ?? this.phone,
+      img:        img ?? this.img,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }

@@ -13,6 +13,9 @@ dependencies:
   intl_phone_number_input: ^0.7.4
   sqflite: ^2.3.3
   url_launcher: ^6.3.0
+  shared_preferences: ^2.5.3
+  google_fonts: ^4.0.3
+  path_provider: ^2.0.15
 
 dev_dependencies:
   flutter_lints: ^4.0.0
