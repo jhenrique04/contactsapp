@@ -1,3 +1,5 @@
+// lib/ui/contact_page.dart
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,13 +12,17 @@ import '../helpers/contact_helper.dart';
 
 class ContactPage extends StatefulWidget {
   final Contact? contact;
-  const ContactPage({Key? key, this.contact}) : super(key: key);
+  const ContactPage({super.key, this.contact});
 
   @override
   State<ContactPage> createState() => _ContactPageState();
 }
 
 class _ContactPageState extends State<ContactPage> {
+  // Mesmas cores do placeholder da Home
+  static const Color _avatarPlaceholderBg   = Color(0xFFE2DDFF);
+  static const Color _avatarPlaceholderIcon = Color(0xFF616161);
+
   final ContactHelper _helper = ContactHelper();
 
   late Contact _editedContact;
@@ -34,10 +40,10 @@ class _ContactPageState extends State<ContactPage> {
     super.initState();
     if (widget.contact != null) {
       _editedContact = widget.contact!.copyWith();
-      _isEditing = false;
+      _isEditing     = false;
     } else {
       _editedContact = Contact(id: 0, name: '', email: '', phone: '', img: '');
-      _isEditing = true;
+      _isEditing     = true;
     }
     _nameCtrl.text  = _editedContact.name;
     _emailCtrl.text = _editedContact.email;
@@ -81,7 +87,7 @@ class _ContactPageState extends State<ContactPage> {
 
   void _toggleEdit() {
     setState(() {
-      _isEditing = true;
+      _isEditing  = true;
       _userEdited = false;
     });
   }
@@ -91,7 +97,7 @@ class _ContactPageState extends State<ContactPage> {
     if (file != null) {
       setState(() {
         _editedContact = _editedContact.copyWith(img: file.path);
-        _userEdited = true;
+        _userEdited    = true;
       });
     }
   }
@@ -101,16 +107,15 @@ class _ContactPageState extends State<ContactPage> {
       FocusScope.of(context).requestFocus(_nameFocus);
       return;
     }
-    // *** SALVA e recupera o ID ***
     final id = await _helper.updateOrCreateContact(_editedContact);
     if (widget.contact == null) {
-      // novo -> atribui o ID retornado e volta com o objeto
+      // novo contato: retorna com ID
       _editedContact = _editedContact.copyWith(id: id);
       Navigator.of(context).pop(_editedContact);
     } else {
-      // edição existente -> sai do modo de edição
+      // apenas sai do modo edição
       setState(() {
-        _isEditing = false;
+        _isEditing  = false;
         _userEdited = false;
       });
     }
@@ -130,6 +135,8 @@ class _ContactPageState extends State<ContactPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final title = _isEditing
         ? (widget.contact == null ? 'Novo Contato' : 'Editar Contato')
         : 'Detalhes';
@@ -137,12 +144,15 @@ class _ContactPageState extends State<ContactPage> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            icon: Icon(
+              _isEditing ? Icons.arrow_back : Icons.arrow_back_ios,
+              color: theme.iconTheme.color,
+            ),
             onPressed: () async {
               if (await _onWillPop()) Navigator.of(context).pop();
             },
@@ -152,36 +162,36 @@ class _ContactPageState extends State<ContactPage> {
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: theme.textTheme.titleLarge?.color,
             ),
           ),
           centerTitle: true,
           actions: [
             if (!_isEditing)
               IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Colors.black),
+                icon: Icon(Icons.edit_outlined, color: theme.iconTheme.color),
                 onPressed: _toggleEdit,
               ),
             if (_isEditing)
               IconButton(
-                icon: const Icon(Icons.save_outlined, color: Colors.black),
+                icon: Icon(Icons.save_outlined, color: theme.iconTheme.color),
                 onPressed: _saveForm,
               ),
           ],
         ),
-        body: _isEditing ? _buildForm() : _buildDetails(),
+        body: _isEditing ? _buildForm(theme) : _buildDetails(theme),
       ),
     );
   }
 
-  Widget _buildDetails() {
+  Widget _buildDetails(ThemeData theme) {
     return Column(
       children: [
         const SizedBox(height: 24),
         Center(
           child: CircleAvatar(
             radius: 60,
-            backgroundColor: const Color(0xFFE2DDFF),
+            backgroundColor: _avatarPlaceholderBg,
             backgroundImage: _editedContact.img.isNotEmpty
                 ? FileImage(File(_editedContact.img))
                 : null,
@@ -189,7 +199,7 @@ class _ContactPageState extends State<ContactPage> {
                 ? const Icon(
                     Icons.person,
                     size: 68,
-                    color: Colors.black,
+                    color: _avatarPlaceholderIcon,
                   )
                 : null,
           ),
@@ -210,7 +220,9 @@ class _ContactPageState extends State<ContactPage> {
             children: [
               Text('Celular',
                   style: GoogleFonts.poppins(
-                      fontSize: 14, color: Colors.grey[600])),
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  )),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -218,11 +230,14 @@ class _ContactPageState extends State<ContactPage> {
                     child: Text(
                       _editedContact.phone,
                       style: GoogleFonts.poppins(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                  // Ícone forçado na mesma cor do placeholder
                   IconButton(
-                    icon: const Icon(Icons.call_outlined, color: Colors.black),
+                    icon: const Icon(Icons.call_outlined, color: _avatarPlaceholderIcon),
                     onPressed: _call,
                   ),
                 ],
@@ -230,7 +245,9 @@ class _ContactPageState extends State<ContactPage> {
               const SizedBox(height: 16),
               Text('Email',
                   style: GoogleFonts.poppins(
-                      fontSize: 14, color: Colors.grey[600])),
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  )),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -238,12 +255,14 @@ class _ContactPageState extends State<ContactPage> {
                     child: Text(
                       _editedContact.email,
                       style: GoogleFonts.poppins(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                  // Ícone forçado na mesma cor do placeholder
                   IconButton(
-                    icon:
-                        const Icon(Icons.email_outlined, color: Colors.black),
+                    icon: const Icon(Icons.email_outlined, color: _avatarPlaceholderIcon),
                     onPressed: _email,
                   ),
                 ],
@@ -267,7 +286,12 @@ class _ContactPageState extends State<ContactPage> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(ThemeData theme) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -276,13 +300,16 @@ class _ContactPageState extends State<ContactPage> {
             onTap: _pickImage,
             child: CircleAvatar(
               radius: 60,
-              backgroundColor: const Color(0xFFE2DDFF),
+              backgroundColor: _avatarPlaceholderBg,
               backgroundImage: _editedContact.img.isNotEmpty
                   ? FileImage(File(_editedContact.img))
                   : null,
               child: _editedContact.img.isEmpty
-                  ? const Icon(Icons.add_a_photo_outlined,
-                      size: 68, color: Colors.black)
+                  ? const Icon(
+                      Icons.add_a_photo_outlined,
+                      size: 68,
+                      color: _avatarPlaceholderIcon,
+                    )
                   : null,
             ),
           ),
@@ -290,46 +317,66 @@ class _ContactPageState extends State<ContactPage> {
           TextField(
             controller: _nameCtrl,
             focusNode: _nameFocus,
-            decoration:
-                AppInputStyle.inputDecoration('Nome', 'Digite o nome'),
+            decoration: InputDecoration(
+              labelText: 'Nome',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              border: border,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
             textCapitalization: TextCapitalization.words,
             onChanged: (v) {
-              _userEdited = true;
+              _userEdited    = true;
               _editedContact = _editedContact.copyWith(name: v);
             },
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _emailCtrl,
-            decoration:
-                AppInputStyle.inputDecoration('Email', 'Digite o email'),
+            decoration: InputDecoration(
+              labelText: 'Email',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              border: border,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
             keyboardType: TextInputType.emailAddress,
             onChanged: (v) {
-              _userEdited = true;
+              _userEdited    = true;
               _editedContact = _editedContact.copyWith(email: v);
             },
           ),
           const SizedBox(height: 16),
           InternationalPhoneNumberInput(
             onInputChanged: (PhoneNumber number) {
-              _userEdited = true;
-              _editedContact =
-                  _editedContact.copyWith(phone: number.phoneNumber ?? '');
+              _userEdited    = true;
+              _editedContact = _editedContact.copyWith(phone: number.phoneNumber ?? '');
             },
             initialValue: PhoneNumber(
               isoCode: 'BR',
               phoneNumber: _editedContact.phone,
             ),
-            textFieldController: _phoneCtrl,
             selectorConfig: const SelectorConfig(
-              selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-              useBottomSheetSafeArea: true,
+              selectorType: PhoneInputSelectorType.DROPDOWN,
+              showFlags: true,
+              setSelectorButtonAsPrefixIcon: true,
             ),
-            inputDecoration:
-                AppInputStyle.inputDecoration('Telefone', 'Digite o telefone'),
+            textFieldController: _phoneCtrl,
+            inputDecoration: InputDecoration(
+              labelText: 'Telefone',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              border: border,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
             formatInput: true,
-            keyboardType: const TextInputType.numberWithOptions(
-                signed: false, decimal: false),
+            keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: false),
           ),
         ],
       ),
@@ -343,36 +390,13 @@ class _ContactPageState extends State<ContactPage> {
           radius: 28,
           backgroundColor: const Color(0xFFEDE7F6),
           child: IconButton(
-            icon: Icon(icon, size: 24, color: Colors.black),
+            icon: Icon(icon, size: 24, color: _avatarPlaceholderIcon),
             onPressed: onTap,
           ),
         ),
         const SizedBox(height: 8),
         Text(label, style: GoogleFonts.poppins(fontSize: 14)),
       ],
-    );
-  }
-}
-
-class AppInputStyle {
-  static InputDecoration inputDecoration(
-      String labelText, String hintText) {
-    return InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      fillColor: Colors.white,
-      filled: true,
-      focusedBorder: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(4)),
-        borderSide: BorderSide(width: 1, color: Colors.blue),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(4)),
-        borderSide: BorderSide(width: 1, color: Colors.grey[300]!),
-      ),
-      border: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(4)),
-      ),
     );
   }
 }

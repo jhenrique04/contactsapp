@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -19,6 +17,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // cores fixas
+  static const Color _avatarPlaceholderBg = Color(0xFFE2DDFF);
+  static const Color _avatarPlaceholderIcon = Color(0xFF616161);
+
   final ContactHelper helper = ContactHelper();
 
   List<Contact> _allContacts      = [];
@@ -26,7 +28,6 @@ class _HomePageState extends State<HomePage> {
   List<Contact> _favoriteContacts = [];
 
   OrderOptions orderOptions = OrderOptions.aToZ;
-
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -60,8 +61,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _allContacts      = list.cast<Contact>();
       _applyFilter();
-      _favoriteContacts =
-          _allContacts.where((c) => c.isFavorite).toList();
+      _favoriteContacts = _allContacts.where((c) => c.isFavorite).toList();
     });
   }
 
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Map<String, List<Contact>> _groupByLetter(List<Contact> list) {
-    final Map<String, List<Contact>> grouped = {};
+    final grouped = <String, List<Contact>>{};
     for (final c in list) {
       final letter = c.name.isNotEmpty ? c.name[0].toUpperCase() : '#';
       grouped.putIfAbsent(letter, () => []).add(c);
@@ -93,12 +93,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(''),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
         automaticallyImplyLeading: false,
         toolbarHeight: 120,
         flexibleSpace: SafeArea(
@@ -109,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFFE2DDFF),
+                  backgroundColor: _avatarPlaceholderBg,
                   backgroundImage: _userPhotoPath.isNotEmpty
                       ? FileImage(File(_userPhotoPath)) as ImageProvider
                       : const AssetImage('assets/avatar_placeholder.png'),
@@ -121,24 +121,19 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       _userName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: theme.textTheme.titleMedium!
+                          .copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${_allContacts.length} Contatos',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: theme.textTheme.bodySmall,
                     ),
                   ],
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.settings),
+                  icon: Icon(Icons.settings, color: theme.iconTheme.color),
                   onPressed: _openSettings,
                 ),
               ],
@@ -146,27 +141,24 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_favoriteContacts.isNotEmpty) ...[
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 'Favoritos',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.titleSmall!
+                    .copyWith(fontWeight: FontWeight.w600),
               ),
             ),
             SizedBox(
               height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _favoriteContacts.length,
                 itemBuilder: (context, i) {
                   final fav = _favoriteContacts[i];
@@ -177,14 +169,14 @@ class _HomePageState extends State<HomePage> {
                       onTap: () => _showOptions(context, idx),
                       child: CircleAvatar(
                         radius: 28,
-                        backgroundColor: const Color(0xFFE2DDFF),
-                        backgroundImage: fav.img.isNotEmpty
-                            ? FileImage(File(fav.img))
-                            : null,
+                        backgroundColor: _avatarPlaceholderBg,
+                        backgroundImage:
+                            fav.img.isNotEmpty ? FileImage(File(fav.img)) : null,
                         child: fav.img.isEmpty
                             ? const Icon(
                                 Icons.person,
-                                color: Colors.black,
+                                size: 28,
+                                color: _avatarPlaceholderIcon,
                               )
                             : null,
                       ),
@@ -194,24 +186,22 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ],
+
           Padding(
-            padding:
-                const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Pesquisar',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey[200],
+                prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
                 border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
+
           Expanded(
             child: _allContacts.isEmpty
                 ? Center(
@@ -221,40 +211,34 @@ class _HomePageState extends State<HomePage> {
                         'Você ainda não possui nenhum contato cadastrado.\n\n'
                         'Clique no botão de adicionar (+) para criar um novo contato.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          color: Colors.grey[700],
-                        ),
+                        style: theme.textTheme.bodyLarge,
                       ),
                     ),
                   )
                 : _visibleContacts.isEmpty
-                    ? const Center(
-                        child: Text('Nenhum contato encontrado'),
+                    ? Center(
+                        child: Text(
+                          'Nenhum contato encontrado',
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       )
-                    : _buildAlphaList(),
+                    : _buildAlphaList(theme),
           ),
         ],
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showContactPage(contact: null),
-        backgroundColor:
-            const Color.fromARGB(255, 80, 29, 199),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: const Icon(Icons.add),
+        backgroundColor: _avatarPlaceholderBg,
+        child: const Icon(Icons.add, color: _avatarPlaceholderIcon),
       ),
     );
   }
 
-  Widget _buildAlphaList() {
+  Widget _buildAlphaList(ThemeData theme) {
     final grouped = _groupByLetter(_visibleContacts);
     final letters = grouped.keys.toList()..sort();
-    final total = letters.fold<int>(
-      0,
-      (sum, k) => sum + grouped[k]!.length + 1,
-    );
+    final total = letters.fold<int>(0, (sum, k) => sum + grouped[k]!.length + 1);
 
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80),
@@ -264,15 +248,14 @@ class _HomePageState extends State<HomePage> {
         for (final letter in letters) {
           if (index == running) {
             return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 letter,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
+                style: theme.textTheme.titleMedium!
+                    .copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
               ),
             );
           }
@@ -280,9 +263,8 @@ class _HomePageState extends State<HomePage> {
           final group = grouped[letter]!;
           if (index < running + group.length) {
             final item = group[index - running];
-            final showDivider =
-                (index - running) != group.length - 1;
-            return _contactTile(item, showDivider);
+            final isLastInGroup = (index - running) == group.length - 1;
+            return _contactTile(item, !isLastInGroup, theme);
           }
           running += group.length;
         }
@@ -291,63 +273,46 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _contactTile(Contact item, bool showDivider) {
+  Widget _contactTile(Contact item, bool showDivider, ThemeData theme) {
     final idx = _allContacts.indexWhere((c) => c.id == item.id);
     return GestureDetector(
       onTap: () => _showOptions(context, idx),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0, vertical: 12.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFFE2DDFF),
-                  backgroundImage: item.img.isNotEmpty
-                      ? FileImage(File(item.img))
-                      : null,
+                  backgroundColor: _avatarPlaceholderBg,
+                  backgroundImage:
+                      item.img.isNotEmpty ? FileImage(File(item.img)) : null,
                   child: item.img.isEmpty
                       ? const Icon(
                           Icons.person,
                           size: 28,
-                          color: Colors.black,
+                          color: _avatarPlaceholderIcon,
                         )
                       : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.name,
-                          style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight:
-                                  FontWeight.w600)),
-                      Text(item.email,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14)),
-                      Text(item.phone,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14)),
+                      Text(item.name, style: theme.textTheme.titleMedium),
+                      Text(item.email, style: theme.textTheme.bodySmall),
+                      Text(item.phone, style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.more_vert,
-                    color: Colors.black),
+                Icon(Icons.more_vert, color: theme.iconTheme.color),
               ],
             ),
           ),
-          if (showDivider)
-            Divider(
-              color: Colors.grey[300],
-              thickness: 1,
-              height: 0,
-            ),
         ],
       ),
     );
@@ -355,7 +320,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _showOptions(BuildContext context, int index) async {
     final contact = _allContacts[index];
-    showModalBottomSheet(
+    final theme = Theme.of(context);
+    await showModalBottomSheet(
       context: context,
       builder: (_) => BottomSheet(
         onClosing: () {},
@@ -363,8 +329,7 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (contact.phone.isNotEmpty)
                 TextButton(
@@ -372,20 +337,22 @@ class _HomePageState extends State<HomePage> {
                     launchUrlString('tel:${contact.phone}');
                     Navigator.pop(context);
                   },
-                  child: Text('Ligar',
-                      style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: Color.fromARGB(255, 80, 29, 199))),
+                  child: Text(
+                    'Ligar',
+                    style: theme.textTheme.bodyMedium!
+                        .copyWith(color: theme.colorScheme.primary),
+                  ),
                 ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _showContactPage(contact: contact);
                 },
-                child: Text('Ver Detalhes',
-                    style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        color: Colors.green)),
+                child: Text(
+                  'Ver Detalhes',
+                  style: theme.textTheme.bodyMedium!
+                      .copyWith(color: Colors.green),
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -393,18 +360,17 @@ class _HomePageState extends State<HomePage> {
                   _loadContacts();
                   Navigator.pop(context);
                 },
-                child: Text('Deletar',
-                    style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        color: Colors.red)),
+                child: Text(
+                  'Deletar',
+                  style: theme.textTheme.bodyMedium!
+                      .copyWith(color: Colors.red),
+                ),
               ),
               const Divider(),
               TextButton(
                 onPressed: () async {
-                  contact.isFavorite =
-                      !contact.isFavorite;
-                  await helper.updateOrCreateContact(
-                      contact);
+                  contact.isFavorite = !contact.isFavorite;
+                  await helper.updateOrCreateContact(contact);
                   await _loadContacts();
                   Navigator.pop(context);
                 },
@@ -412,9 +378,7 @@ class _HomePageState extends State<HomePage> {
                   contact.isFavorite
                       ? 'Remover dos favoritos'
                       : 'Adicionar aos favoritos',
-                  style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      color: Color.fromARGB(255, 80, 29, 199)),
+                  style: theme.textTheme.bodyMedium,
                 ),
               ),
             ],
@@ -427,8 +391,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openSettings() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-          builder: (_) => const SettingsPage()),
+      MaterialPageRoute(builder: (_) => const SettingsPage()),
     );
     await _loadUserProfile();
   }
@@ -436,10 +399,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> _showContactPage({ Contact? contact }) async {
     await Navigator.push<Contact>(
       context,
-      MaterialPageRoute(
-          builder: (_) => ContactPage(contact: contact)),
+      MaterialPageRoute(builder: (_) => ContactPage(contact: contact)),
     );
-    // sempre recarrega ao voltar
     await _loadContacts();
   }
 }

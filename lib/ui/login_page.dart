@@ -1,9 +1,6 @@
-// lib/ui/login_page.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -68,8 +65,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme   = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE2DDFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
@@ -88,12 +88,12 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundColor: Colors.grey[300],
+                  backgroundColor: surface,
                   backgroundImage: _userPhotoPath != null
                       ? FileImage(File(_userPhotoPath!))
                       : null,
                   child: _userPhotoPath == null
-                      ? Icon(Icons.person, size: 60, color: Colors.grey[700])
+                      ? Icon(Icons.person, size: 60, color: theme.iconTheme.color)
                       : null,
                 ),
               ),
@@ -101,11 +101,8 @@ class _LoginPageState extends State<LoginPage> {
               // Título
               Text(
                 'Bem-vindo, $_userName',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
+                style: theme.textTheme.headlineSmall!
+                    .copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 32),
               // Formulário de senha
@@ -114,19 +111,20 @@ class _LoginPageState extends State<LoginPage> {
                 child: TextFormField(
                   controller: _passCtrl,
                   obscureText: _obscure,
-                  style: GoogleFonts.poppins(color: Colors.black),
+                  style: theme.textTheme.bodyMedium,
                   decoration: InputDecoration(
                     labelText: 'Senha',
-                    labelStyle: GoogleFonts.poppins(color: Colors.black),
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscure ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.black54,
+                        color: theme.iconTheme.color,
                       ),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
@@ -142,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 80, 29, 199),
+                    backgroundColor: theme.colorScheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -150,11 +148,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: Text(
                     'Entrar',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                    style: theme.textTheme.titleMedium!
+                        .copyWith(color: theme.colorScheme.onPrimary),
                   ),
                 ),
               ),

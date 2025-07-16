@@ -1,5 +1,3 @@
-// lib/ui/settings_page.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -22,11 +20,11 @@ class _SettingsPageState extends State<SettingsPage> {
   final _confirmCtrl = TextEditingController();
   final _picker      = ImagePicker();
 
-  bool _obscure       = true;
-  bool _loading       = true;
-  String _savedPassword = '';
+  bool    _obscure         = true;
+  bool    _loading         = true;
+  String  _savedPassword   = '';
   String? _photoPath;
-  String _userName     = '';
+  String  _userName        = '';
 
   @override
   void initState() {
@@ -51,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _save() async {
+    // só valida se trocar senha ou nome for válido
     if (!_formKey.currentState!.validate()) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', _nameCtrl.text.trim());
@@ -84,9 +83,10 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     }
 
+    final iconColor = Theme.of(context).iconTheme.color;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(''),
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -106,7 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         : null,
                     backgroundColor: Colors.grey[300],
                     child: _photoPath == null
-                        ? const Icon(Icons.add_a_photo, size: 28)
+                        ? Icon(Icons.add_a_photo, size: 28, color: iconColor)
                         : null,
                   ),
                 ),
@@ -120,6 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -134,9 +135,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.check),
+                  icon: Icon(Icons.check, color: iconColor),
                   onPressed: _save,
-                  color: Colors.black,
                 ),
               ],
             ),
@@ -164,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 24),
 
-              // Senha atual
+              // Senha atual: só obrigatória se for trocar a senha
               TextFormField(
                 controller: _currentCtrl,
                 obscureText: _obscure,
@@ -174,14 +174,19 @@ class _SettingsPageState extends State<SettingsPage> {
                   labelStyle: GoogleFonts.poppins(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                      color: iconColor,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
                 style: GoogleFonts.poppins(),
                 validator: (v) {
-                  if (v == null || v != _savedPassword) {
-                    return 'Senha atual incorreta';
+                  // se o usuário preencheu nova senha, exige checar a atual
+                  if (_newCtrl.text.isNotEmpty) {
+                    if (v == null || v != _savedPassword) {
+                      return 'Senha atual incorreta';
+                    }
                   }
                   return null;
                 },
@@ -198,7 +203,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   labelStyle: GoogleFonts.poppins(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                      color: iconColor,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -222,7 +229,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   labelStyle: GoogleFonts.poppins(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                      color: iconColor,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -239,7 +248,7 @@ class _SettingsPageState extends State<SettingsPage> {
               // Licenças
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.info_outline),
+                leading: Icon(Icons.info_outline, color: iconColor),
                 title: Text('Licenças', style: GoogleFonts.poppins()),
                 onTap: () {
                   showLicensePage(

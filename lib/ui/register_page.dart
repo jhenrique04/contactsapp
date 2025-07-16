@@ -1,9 +1,6 @@
-// lib/ui/register_page.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -58,8 +55,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme   = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE2DDFF),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
@@ -71,13 +71,11 @@ class _RegisterPageState extends State<RegisterPage> {
                 onTap: _pickPhoto,
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage: _photoPath != null
-                      ? FileImage(File(_photoPath!))
-                      : null,
+                  backgroundColor: surface,
+                  backgroundImage:
+                      _photoPath != null ? FileImage(File(_photoPath!)) : null,
                   child: _photoPath == null
-                      ? Icon(Icons.add_a_photo,
-                          size: 60, color: Colors.grey[700])
+                      ? Icon(Icons.add_a_photo, size: 60, color: theme.iconTheme.color)
                       : null,
                 ),
               ),
@@ -85,19 +83,14 @@ class _RegisterPageState extends State<RegisterPage> {
               // Título
               Text(
                 'Cadastro',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
+                style: theme.textTheme.headlineSmall!
+                    .copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text(
                 'Crie sua conta',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: theme.textTheme.bodyMedium!
+                    .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
               ),
               const SizedBox(height: 32),
               // Formulário
@@ -108,52 +101,46 @@ class _RegisterPageState extends State<RegisterPage> {
                     // Nome
                     TextFormField(
                       controller: _nameCtrl,
-                      style: GoogleFonts.poppins(color: Colors.black),
+                      style: theme.textTheme.bodyMedium,
                       decoration: InputDecoration(
                         labelText: 'Seu nome',
-                        labelStyle: GoogleFonts.poppins(color: Colors.black),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Digite seu nome'
-                          : null,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'Digite seu nome' : null,
                     ),
                     const SizedBox(height: 24),
                     // Senha
                     TextFormField(
                       controller: _pass1Ctrl,
                       obscureText: _obscure,
-                      style: GoogleFonts.poppins(color: Colors.black),
+                      style: theme.textTheme.bodyMedium,
                       decoration: InputDecoration(
                         labelText: 'Senha',
-                        labelStyle: GoogleFonts.poppins(color: Colors.black),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscure
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.black54,
+                            _obscure ? Icons.visibility : Icons.visibility_off,
+                            color: theme.iconTheme.color,
                           ),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Digite a senha';
-                        }
-                        if (v.length < 4) {
-                          return 'Mínimo 4 caracteres';
-                        }
+                        if (v == null || v.isEmpty) return 'Digite a senha';
+                        if (v.length < 4) return 'Mínimo 4 caracteres';
                         return null;
                       },
                     ),
@@ -162,33 +149,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _pass2Ctrl,
                       obscureText: _obscure,
-                      style: GoogleFonts.poppins(color: Colors.black),
+                      style: theme.textTheme.bodyMedium,
                       decoration: InputDecoration(
                         labelText: 'Confirmar senha',
-                        labelStyle: GoogleFonts.poppins(color: Colors.black),
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscure
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.black54,
+                            _obscure ? Icons.visibility : Icons.visibility_off,
+                            color: theme.iconTheme.color,
                           ),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Confirme a senha';
-                        }
-                        if (v != _pass1Ctrl.text) {
-                          return 'Senhas não coincidem';
-                        }
+                        if (v == null || v.isEmpty) return 'Confirme a senha';
+                        if (v != _pass1Ctrl.text) return 'Senhas não coincidem';
                         return null;
                       },
                     ),
@@ -199,21 +180,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: ElevatedButton(
                         onPressed: _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 80, 29, 199),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: theme.colorScheme.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: Text(
                           'Salvar',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: theme.textTheme.titleMedium!
+                              .copyWith(color: theme.colorScheme.onPrimary),
                         ),
                       ),
                     ),
