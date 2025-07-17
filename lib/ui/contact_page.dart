@@ -1,5 +1,3 @@
-// lib/ui/contact_page.dart
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -103,10 +101,23 @@ class _ContactPageState extends State<ContactPage> {
   }
 
   Future<void> _saveForm() async {
+    // 1) validação de nome
     if (_editedContact.name.trim().isEmpty) {
       FocusScope.of(context).requestFocus(_nameFocus);
       return;
     }
+    // 2) validação opcional de email
+    final emailText = _editedContact.email.trim();
+    if (emailText.isNotEmpty) {
+      final emailRegex = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
+      if (!emailRegex.hasMatch(emailText)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, insira um email válido.')),
+        );
+        return;
+      }
+    }
+    // 3) salva/atualiza no banco
     final id = await _helper.updateOrCreateContact(_editedContact);
     if (widget.contact == null) {
       // novo contato: retorna com ID
@@ -235,7 +246,6 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                     ),
                   ),
-                  // Ícone forçado na mesma cor do placeholder
                   IconButton(
                     icon: const Icon(Icons.call_outlined, color: _avatarPlaceholderIcon),
                     onPressed: _call,
@@ -260,7 +270,6 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                     ),
                   ),
-                  // Ícone forçado na mesma cor do placeholder
                   IconButton(
                     icon: const Icon(Icons.email_outlined, color: _avatarPlaceholderIcon),
                     onPressed: _email,
